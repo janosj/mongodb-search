@@ -1,0 +1,19 @@
+With a search index created on the sample_mflix.movies collection,
+search can be demonstrated inside of Compass using an Aggregation Pipeline.
+
+Add a $search stage with the following spec:
+{
+    "search": {
+      "query": "baseball",
+      "path": "plot"
+    }
+}
+
+Add a $project stage with the following spec:
+{
+  title:1, plot: 1
+}
+
+You can show an updated results list by simply changing the search term,
+e.g. change "baseball" to "pirate" and note the different movies.
+
