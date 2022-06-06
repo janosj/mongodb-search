@@ -1,0 +1,3 @@
+{
+    "uri": "mongodb+srv://<user>:<password>@<atlas-cluster-fqdn>/?retryWrites=true&w=majority"
+}
