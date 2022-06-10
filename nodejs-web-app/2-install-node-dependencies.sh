@@ -1,9 +1,12 @@
+# Prereq: Node and npm must be installed on your local workstation.
+# Then:
+
 npm install connect
 npm install express
 npm install mongodb
 npm install serve-static
 
-# to automatically restart the server on changes
-# run "nodemon index.js" instead of "node index.js"
+# Optional.
+# Detects source code changes and restarts the server automatically.
 npm install nodemon --save-dev
 
