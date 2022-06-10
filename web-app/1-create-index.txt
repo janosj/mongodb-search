@@ -1,0 +1,22 @@
+Demo Prerequisite:
+Create the following Atlas Search index on the sample_mflix.movies collection
+(keeping 'default' as the Index Name):
+{
+  "mappings": {
+    "dynamic": false,
+    "fields": {
+      "title": { "type": "string" },
+      "fullplot": { "type": "string" },
+      "genres": [ { "type": "string" }, { "type": "stringFacet" } ]
+    }
+  }
+}
+
+That index can be created using the JSON Editor within the Atlas UI.
+Alternatively, you could use the API or the Atlas CLI. See here:
+https://www.mongodb.com/docs/atlas/atlas-search/create-index/
+
+Note in the index definition that genres is declared as both "string" and "stringFacet".
+"stringFacet" allows the application to identify the counts by genre for a given search, 
+while "string" enables the app to subsequently narrow the search to any user-selected genres.
+

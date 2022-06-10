@@ -7,7 +7,7 @@
   <meta name="description" content="Atlas Search" />
   <meta name="author" content="Jonathan Janos" />
 
-  <title>Atlas Search</title>
+  <title>Atlas Search (Demo App)</title>
 
   <!-- Bootstrap core CSS -->
   <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet" />
@@ -38,21 +38,37 @@
 <body>
 
   <!-- Search Bar -->
-  <div class="container-fluid sticky-top bg-white">
+  <!--<div class="container-fluid sticky-top bg-success">-->
+  <div class="container-fluid sticky-top bg-white" style="border: 3px green; border-style: solid none;">
     <div class="row border">
       <div class="col p-3" align="center">
         <form class="form" style="width: 50%">
           <div class="input-group">
-            <img src="atlas-search-icon.png" style="display:block;" width="38" height="38">&nbsp;
+            <img src="atlas-search-icon.png" style="display:block;" width="38" height="38" class="bg-white">&nbsp;
             <label class="sr-only" for="alwaysAddLabels-invisible">Search Query</label>
             <!-- add width here to put spacing in front of button -->
             <input class="form-control" type="text" id="queryText" placeholder="Atlas Search">
             &nbsp;&nbsp;
-            <button class="btn btn-light" type="button" id="submitBtn" onclick="submitQuery(0)">Search</button>
+            <button class="btn btn-light" type="button" id="submitBtn" onclick="resetPage(); fetchResults(); return false;">Search</button>
             &nbsp;&nbsp;
-            <button class="btn btn-light" type="reset" onclick="resetPage()">Reset</button>
+            <button class="btn btn-light" type="reset" onclick="resetPage(); setQueryText(''); return false;">Reset</button>
+            &nbsp;&nbsp;
+            <button class="btn btn-light" type="button" id="facetsBtn" onclick="clickFacetsBtn(); return false;" disabled>Facets</button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 
+    Content holder for Search Facets.
+    Empty at the outset, populated dynamically when the search results are retrieved
+    and the Facets button is clicked.
+  -->    
+  <div class="container-fluid bg-light" style="display:none" id="facetToggle">
+    <div class="row">
+      <div class="col p-3" align="center">
+        <div id="facetSection"></div>
       </div>
     </div>
   </div>
@@ -64,24 +80,24 @@
   <div class="container-fluid">
     <div class="row">
       <div class="col p-3">
-        <div id="queryResults"></div>
+        <div id="searchResultsSection"></div>
       </div>
     </div>
   </div>
 
-    <!-- 
-    Content holder for pagination links.
-    Empty at the outset, populated dynamically when the search results are retrieved.
-    -->    
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col p-3" align="center">
-          <div id="paginationLinks"></div>
-        </div>
+  <!-- 
+  Content holder for pagination links.
+  Empty at the outset, populated dynamically when the search results are retrieved.
+  -->    
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col p-3" align="center">
+        <div id="paginationLinks"></div>
       </div>
-      <input hidden id="hiddenPageNumber" value="0" />
-      <input hidden id="hiddenQueryString" value="" />
     </div>
+    <input hidden id="hiddenPageNumber" value="0" />
+    <input hidden id="hiddenQueryString" value="" />
+  </div>
 
 
   <!-- 
@@ -109,6 +125,7 @@
   </div>
 
   <!-- Bootstrap core JavaScript -->
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js"></script>
 
   <script>
@@ -116,7 +133,6 @@
     // Pagination. Number of results to retrieve and display.
     const pageSize = 10;
 
-    // Convenience functions, get/set methods for the Page Number.
     function getPageNumber() {
       return parseInt(document.getElementById("hiddenPageNumber").value);
 
@@ -125,36 +141,40 @@
       document.getElementById("hiddenPageNumber").value = newPageNumber;
     }
 
-    // Clears the search results.
-    function resetPage() {
-      document.getElementById("queryResults").innerHTML = "";
+    // Fetch the next/previous page of results.
+    function getNewPage(newPageNumber) {
+
+      // Ensures that the query input field still matches the original query.
+      setQueryText(document.getElementById("hiddenQueryString").value);
+
+      clearSearchResults();
+      clearPageLinks();
+      setPageNumber(newPageNumber);
+      fetchResults();
+
+    }
+
+    function getQueryText() {
+      return document.getElementById("queryText").value;
+    }
+    function setQueryText(newQueryText) {
+      document.getElementById("queryText").value = newQueryText;
+    }
+
+
+    function clearSearchResults() {
+      document.getElementById("searchResultsSection").innerHTML = "";
+    }
+    function clearPageLinks() {
       document.getElementById("paginationLinks").innerHTML = "";
     }
 
-    // Fetch the next page of results.
-    function getNext() {
-
-      // Ensures that the query input field still matches the original query.
-      document.getElementById("queryText").value = document.getElementById("hiddenQueryString").value;
-
-      // Increment the page number and submit the query.
-      newPageNumber = getPageNumber() + 1
-      setPageNumber(newPageNumber);
-      submitQuery(newPageNumber);
-
-    }
-
-    // Fetch the previous page of results.
-    function getPrevious() {
-
-      // Ensures that the query input field still matches the original query.
-      document.getElementById("queryText").value = document.getElementById("hiddenQueryString").value;
-
-      // Decrement the page number and submit the query.
-      newPageNumber = getPageNumber() - 1
-      setPageNumber(newPageNumber);
-      submitQuery(newPageNumber);
-
+    function resetPage() {
+      clearSearchResults();
+      clearPageLinks();
+      clearFacets();
+      setPageNumber(0);
+      document.getElementById("facetsBtn").disabled = true;
     }
 
     // Submit form on pressing "enter"
@@ -166,22 +186,24 @@
       }
     });
 
-    // Submit the query and process the results.
-    // Page numbers starts at 0. 
-    function submitQuery(pageNumber) {
+    // Fetch the new set of search results.
+    function fetchResults() {
 
-      console.log("submitQuery: Start");
+      // Exit if there's no query string.
+      if (!getQueryText()) {
+        return;
+      }
 
-      setPageNumber(pageNumber);
-
-      // Clear any existing search results.
-      resetPage();
+      console.log("Fetching results.");
 
       // Construct the request object.
       var obj = {};
-      obj.queryText = document.getElementById("queryText").value;
+      obj.queryText = getQueryText();
       obj.pageSize = pageSize;
       obj.pageNumber = getPageNumber();
+      if (selectedFacetsArray.length>0) {
+        obj.facets = selectedFacetsArray;
+      }
       console.log("Query object is: " + JSON.stringify(obj));
 
       // Preserves the query string for future use in prev/next links.
@@ -201,7 +223,7 @@
 
         if (response.status == 200) {
 
-          console.log("submitQuery: Response indicates success");
+          console.log("fetchResults: Response indicates success");
           response.json().then(searchResults => {
 
             let docCount = 0;
@@ -245,17 +267,22 @@
             }
 
             pageLinksHTML = "";
-            if (getPageNumber() > 0) {
-              pageLinksHTML = "<a href='#' onclick='getPrevious()''>previous</a>"; 
+            let thisPage = getPageNumber();
+            if (thisPage > 0) {
+              let previousPage = thisPage - 1;
+              pageLinksHTML = "<a href='#' onclick='getNewPage(" + previousPage + ")''>previous</a>"; 
             }
 
             if (includeNextLink) {
               if (pageLinksHTML != "") {
                 pageLinksHTML += "&nbsp;&nbsp;&nbsp;";
               }
-              pageLinksHTML += "<a href='#' onclick='getNext()''>next</a>"; 
+              let nextPage = thisPage + 1;
+              pageLinksHTML += "<a href='#' onclick='getNewPage(" + nextPage + ")''>next</a>"; 
             }
             document.getElementById("paginationLinks").innerHTML = pageLinksHTML;
+
+            document.getElementById("facetsBtn").disabled = false;
 
           })
 
@@ -263,24 +290,24 @@
 
           // Process error codes.
           // Server has to propagate a non-200 status as well as the error message content.
-          document.getElementById("queryResults").innerHTML += "Oops. Something went wrong.";
+          document.getElementById("searchResultsSection").innerHTML += "<center>Oops. Something went wrong.</center>";
 
           response.json().then(function(responseBody) {
-            console.log("submitQuery: Response indicates FAIL", responseBody);
+            console.log("fetchResults: Response indicates FAIL", responseBody);
           });
 
         }
 
       })
       .catch((error) => {
-        console.error('Error in submitQuery. ', error);
+        console.error('Error in fetchResults. ', error);
       })
 
     }
 
     // Displays a query result
     function displayResult(title, plotSummary) {
-      document.getElementById("queryResults").innerHTML += 
+      document.getElementById("searchResultsSection").innerHTML += 
         "<div class='card'><div class='card-body'>" + 
           "<h5 class='card-title'>" + title + "</h5>" +
           "<p class='card-text' style='font-size:14px'>" + plotSummary + "</p>" +
@@ -288,6 +315,151 @@
 
     }
 
+
+    /* *************************************************************
+     *  Facets
+     * ************************************************************* */
+
+    var selectedFacetsMap = new Map();
+    var selectedFacetsArray = [];
+
+    // Toggle button to display or hide the facets section.
+    function clickFacetsBtn() {
+
+      if ( document.getElementById("facetToggle").style.display == "none" ) {
+        // If we don't have the facets already, we have to go get them.
+        if (document.getElementById("facetSection").innerHTML == "") {
+          getFacets();
+        }
+        showFacets();
+      } else {
+        hideFacets();
+      };
+
+    }
+
+    function hideFacets() {
+      document.getElementById("facetToggle").style.display = "none";
+    }
+
+    function showFacets() {
+      document.getElementById("facetToggle").style.display = "inline-block";
+    }
+
+    function getFacets() {
+
+      console.log("getFacets: Start");
+      document.getElementById("facetSection").innerHTML = "";
+      selectedFacetsMap = new Map();
+
+      // Construct the request object.
+      var obj = {};
+      obj.queryText = getQueryText();
+      console.log("Query object is: " + JSON.stringify(obj));
+
+      fetch("/getFacets", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(obj)
+      })
+      // stopped using this method b/c it doesn't allow for processing of error status
+      //.then(response => response.json())
+      //.then(data => { }
+      .then( function(response) {
+
+        if (response.status == 200) {
+
+          console.log("getFacets: Response indicates success");
+
+          response.json().then(facetArray => {
+
+            // This supports multiple facets, but here we just have 1 (genres).
+            for (const thisFacet of facetArray) {
+
+              console.log("Facet: ", JSON.stringify(thisFacet));
+              console.log(thisFacet.facet.genresFacet);
+              let bucketList = thisFacet.facet.genresFacet.buckets;
+              console.log(bucketList);
+              for (let i = 0; i < bucketList.length; i++) {
+                let obj = bucketList[i];
+                console.log(obj);
+                displayFacet(obj._id, obj.count);
+              }
+            }
+
+            // Remember the facet section has to be visible.
+
+          });
+
+        } else {
+
+          // Process error codes.
+          // Server has to propagate a non-200 status as well as the error message content.
+
+          document.getElementById("facetSection").innerHTML = "<center>Oops. Something went wrong with facets.</center>";
+          document.getElementById("facetToggle").style.display="inline-block";
+
+          response.json().then(function(responseBody) {
+            console.log("getFacets: Response indicates FAIL", responseBody);
+          });
+
+        }
+
+      })
+      .catch((error) => {
+        console.error('Error in getFacets. ', error);
+      })
+
+    }
+
+    // Displays a facet
+    function displayFacet(title, count) {
+
+      console.log("Displaying Facet: " + title);
+
+      let facetHTML = 
+        "<div class='form-check-inline'>" + 
+          "<input class='form-check-input' type='checkbox' value='" + title + "' onclick='selectFacet(this);'>" +
+          "<label class='form-check-label' for='flexCheckDefault'>" +
+            title + " (" + count + ")" +
+          "</label>" +
+        "</div>";
+
+      document.getElementById("facetSection").innerHTML += facetHTML;
+      
+    };
+
+    // Adds or removes the selected/deselected facet from the query
+    // and refreshes the search results accordingly.
+    function selectFacet(facetCheckbox) {
+
+      if (facetCheckbox.checked) {
+        selectedFacetsMap.set(facetCheckbox.value, 1);
+      } else {
+        selectedFacetsMap.delete(facetCheckbox.value);
+      };
+
+      selectedFacetsArray = Array.from(selectedFacetsMap.keys());
+      console.log("Selected Facets: " + selectedFacetsArray);
+
+      // Ensures that the query input field still matches the original query.
+      setQueryText(document.getElementById("hiddenQueryString").value);
+
+      clearSearchResults();
+      clearPageLinks();
+      setPageNumber(0);
+      fetchResults();
+
+    }
+
+    function clearFacets() {
+      hideFacets();
+      selectedFacetsMap = new Map();
+      selectedFacetsArray = [];
+      document.getElementById("facetSection").innerHTML = "";
+    }
 
   </script>
 </body>
