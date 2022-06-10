@@ -29,7 +29,7 @@ public class BasicSearchClient {
 	  MongoCollection<Document> collection = database.getCollection("movies");
 					
 	  collection.aggregate(Arrays.asList(
-        eq("$search", eq("text", agg)), 
+	    eq("$search", eq("text", agg)), 
 	    limit(5), 
 	    project(fields(excludeId(), include("title", "plot"))))
 	  ).forEach(doc -> System.out.println(doc.toJson()));	
