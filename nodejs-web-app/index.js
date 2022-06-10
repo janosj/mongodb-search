@@ -88,7 +88,11 @@ app.post('/runQuery', async (request, response) => {
                     "text": {
                         "query": queryText,
                         "path": ["title", "fullplot"]
-                        /*,"fuzzy": {
+                        // There are several search queries used across this app.
+                        // Make sure they all use the same features consistently, 
+                        // or you'll end up with inconsistent results! sorting, counts, etc.
+                        /*
+                        ,"fuzzy": {
                             "maxEdits": 2
                         }*/
                     },
@@ -175,6 +179,9 @@ app.post('/getFacets', async (request, response) => {
                         "text": {
                             "query": queryText,
                             "path": ["title", "fullplot"]
+                            // There are several search queries used across this app.
+                            // Make sure they all use the same features consistently, 
+                            // or you'll end up with inconsistent results! sorting, counts, etc.
                             /*,
                             "fuzzy": {
                                 "maxEdits": 2
