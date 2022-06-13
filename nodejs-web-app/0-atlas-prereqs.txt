@@ -1,3 +1,6 @@
-This demo requires access to an Atlas cluster that has the sample data sets loaded. i
+This demo requires access to an Atlas cluster that has the sample data sets loaded.
 Specifically, it uses the sample_mflix.movies collection.
+
+Before running the node app, copy the file demo-conf.json.EXAMPLE to demo-conf.json
+and replace the Atlas connect string with the details for your cluster.
 

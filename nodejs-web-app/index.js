@@ -201,7 +201,7 @@ app.post('/getFacets', async (request, response) => {
         let result = await movies.aggregate( aggPipeline ).toArray();
         //console.log(result);
         response.send(result);
-        console.log("List of facets sent back to front-end app.\n");
+        console.log("List of facets with counts delivered to web client.\n");
 
     } catch (e) {
         console.log("error caught in index.js (/getFacets):", e.message);
