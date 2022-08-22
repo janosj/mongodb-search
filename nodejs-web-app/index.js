@@ -4,13 +4,24 @@ const { MONGO_CLIENT_EVENTS } = require('mongodb');
 const path = require('path')
 const app = express()
 
-// Note: uses 8081 to leave 8080 available for Ops Manager or anything else.
-const port = 8081
+// Note: uses 8082 to leave 8080 available for Ops Manager or anything else.
+const port = 8082
 
 // Establish MDB connection on startup.
 // Specify Atlas connect string in the demo-conf.json file.
 const config = require('./demo-conf.json');
-const uri = config.uri;
+
+var args = process.argv.slice(2);
+var atlasEnv = args[0];
+var uri = "";
+if (atlasEnv == "uri_a4g") {
+    uri = config.uri_a4g;
+} else {
+    // Use Atlas Commercial by default
+    uri = config.uri_atlas;
+}
+
+console.log("Node app set to use " + atlasEnv);
 
 const MongoClient = require('mongodb').MongoClient;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
