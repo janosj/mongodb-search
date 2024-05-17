@@ -1,4 +1,4 @@
-With a search index created on the sample_mflix.movies collection,
+With a search index created on the sample_mflix.embedded_movies collection,
 search can be demonstrated inside of Compass using an Aggregation Pipeline.
 
 Add a $search stage with the following spec:

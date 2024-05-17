@@ -49,11 +49,13 @@
             <!-- add width here to put spacing in front of button -->
             <input class="form-control" type="text" id="queryText" placeholder="Atlas Search">
             &nbsp;&nbsp;
-            <button class="btn btn-light" type="button" id="submitBtn" onclick="resetPage(); fetchResults(); return false;">Search</button>
+            <button class="btn btn-light" type="button" id="submitBtn" onclick="resetPage(); fetchResults('runQuery'); return false;">Search</button>
             &nbsp;&nbsp;
             <button class="btn btn-light" type="reset" onclick="resetPage(); setQueryText(''); return false;">Reset</button>
             &nbsp;&nbsp;
             <button class="btn btn-light" type="button" id="facetsBtn" onclick="clickFacetsBtn(); return false;" disabled>Facets</button>
+            &nbsp;&nbsp;
+            <button class="btn btn-light" type="button" id="vectorBtn" onclick="resetPage(); fetchResults('runVectorQuery'); return false;">Vector Search</button>
           </div>
         </form>
       </div>
@@ -132,6 +134,7 @@
 
     // Pagination. Number of results to retrieve and display.
     const pageSize = 10;
+    var previousSearchEndpoint = "none";
 
     function getPageNumber() {
       return parseInt(document.getElementById("hiddenPageNumber").value);
@@ -150,7 +153,7 @@
       clearSearchResults();
       clearPageLinks();
       setPageNumber(newPageNumber);
-      fetchResults();
+      fetchResults("prev-next-link");
 
     }
 
@@ -187,7 +190,7 @@
     });
 
     // Fetch the new set of search results.
-    function fetchResults() {
+    function fetchResults(searchEndpoint) {
 
       // Exit if there's no query string.
       if (!getQueryText()) {
@@ -209,7 +212,16 @@
       // Preserves the query string for future use in prev/next links.
       document.getElementById("hiddenQueryString").value = obj.queryText;
 
-      fetch("/runQuery", {
+      // searchEndpoint is passed in by the button clicked,
+      // either /runQuery or /runVectorQuery.
+      if (searchEndpoint == "prev-next-link") {
+        endpoint = previousSearchEndpoint;
+      } else {
+        endpoint = "/" + searchEndpoint;
+        previousSearchEndpoint = endpoint;
+      }
+
+      fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -238,19 +250,24 @@
 
                 // Process search highlights.
                 // See blog: https://www.mongodb.com/developer/products/atlas/visually-showing-atlas-search-highlights-javascript-html/
-                searchHit.highlights.forEach(highlight => {
-                  let texts = highlight.texts;
-                  let replacements = texts.map(text => {
-                      if(text.type == "hit") {
-                          //return "<mark>" + text.value + "</mark>"; // leaves an unwanted trailing space.
-                          return "<font class='hl'>" + text.value + "</font>";
-                      } else {
-                          return text.value;
-                      }
-                  }).join("");
-                  if (displayText != "") { displayText += " ... "; }
-                  displayText += replacements;
-                });
+                // This has to be conditional - vector search doesn't produce highlights
+                if (searchHit.highlights) {
+
+                  searchHit.highlights.forEach(highlight => {
+                    let texts = highlight.texts;
+                    let replacements = texts.map(text => {
+                        if(text.type == "hit") {
+                            //return "<mark>" + text.value + "</mark>"; // leaves an unwanted trailing space.
+                            return "<font class='hl'>" + text.value + "</font>";
+                        } else {
+                            return text.value;
+                        }
+                    }).join("");
+                    if (displayText != "") { displayText += " ... "; }
+                    displayText += replacements;
+                  });
+
+                }
                 
                 if ( displayText == "" && searchHit.hasOwnProperty('fullplot') ) { displayText = searchHit.fullplot };
 
@@ -450,7 +467,7 @@
       clearSearchResults();
       clearPageLinks();
       setPageNumber(0);
-      fetchResults();
+      fetchResults("runQuery");
 
     }
 

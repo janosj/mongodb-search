@@ -1,11 +1,5 @@
-# For testing search pipelines via command shell.
+// For testing search pipelines via mongosh.
 
-# Not obvious how to parse json config file from bash, 
-# so using standard config file vs. node config file in current directory.
-# (not ideal)
-source ../demo.conf
-
-mongo $MDB_CONNECT_URI --eval '
 
 db = db.getSiblingDB("sample_mflix");
 
@@ -54,12 +48,7 @@ let stageLimit = {"$limit":2}
 
 let stageOut = {"$out":"testOutput"}
 
-db.movies.aggregate([ altFacets, stageLimit, stageOut ]);
+db.embedded_movies.aggregate([ altFacets, stageLimit, stageOut ]);
 
-
-'
-
-echo
-echo "Pipeline finished, check database for output."
-echo
+console.log("output written to testOutput collection.");
 
