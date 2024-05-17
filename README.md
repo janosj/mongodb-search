@@ -1,4 +1,4 @@
-A simple and clean example of using Atlas Search within a node.js web application. Includes keyword search, highlighting, pagination, and facets. 
+A simple, clean example of using Atlas Search within a node.js web application. Includes keyword search, highlighting, pagination, and facets. 
 
 <img src="images/demo-screenshot.png" alt="Atlas Search Demo App" width="800"/>
 
@@ -51,7 +51,7 @@ as documented in this [blog](https://www.mongodb.com/developer/products/atlas/se
 
 If you want to try Vector Search, you'll need an Open AI key. Although the embedded_movies collection already includes some plot vectors, you'll need a key to vectorize your search queries. If you don't have a key you can still run the demo - you just can't use vector search. 
 
-# Running the App
+# Running the Demo Application
 
 The demo app is written in Node.js. Install Node.js, then install the demo dependencies ("npm install") as defined in the `package.json` file. Your Atlas cluster connect string and your Open AI key (if you're using one) can be passed in as environment parameters:
 
