@@ -6,10 +6,10 @@ A simple and clean example of using Atlas Search within a node.js web applicatio
 
 Atlas Search (and Vector Search) requires MongoDB Atlas. Launch a cluster and load the sample datasets, which includes the `sample_mflix` database and, within it, the `embedded_movies` collection. That collection has a `plot` field, which will be used to support standard text searches, and a `plot_embedding` field that supports vector search.
 
-The required search indexes can be created using the Atlas UI. Alternatively, you could use the Atlas Admin API, the Atlas CLI, Terraform, etc. (see [here](https://www.mongodb.com/docs/atlas/atlas-search/create-index/)). 
-
-Create the following Atlas Search index on the sample_mflix.embedded_movies collection
+The required search indexes can be created using the Atlas UI. Alternatively, you could use the Atlas Admin API, the Atlas CLI, Terraform, etc. (see [here](https://www.mongodb.com/docs/atlas/atlas-search/create-index/)). Create the following Atlas Search index on the sample_mflix.embedded_movies collection
 (keeping 'default' as the Index Name):
+
+```
 {
   "mappings": {
     "dynamic": false,
@@ -20,6 +20,7 @@ Create the following Atlas Search index on the sample_mflix.embedded_movies coll
     }
   }
 }
+```
 
 Note in the index definition that genres is declared as both "string" and "stringFacet".
 "stringFacet" allows the application to identify the counts by genre for a given search,
@@ -34,6 +35,7 @@ Index Name: vector_index (default)
 
 Index JSON specification:
 
+```
 {
   "fields": [
     {
@@ -44,4 +46,5 @@ Index JSON specification:
     }
   ]
 }
+```
 
