@@ -40,6 +40,7 @@ client.connect( (err,client) => {
 const dbName = "sample_mflix"
 const dataCollection = "embedded_movies"
 const movieCollection = client.db(dbName).collection(dataCollection)
+const auditCollection = client.db(dbName).collection("searchHistory")
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname + '/web/index.html'))
@@ -81,6 +82,25 @@ async function getEmbedding(query) {
 
 }
 
+// Log the search, maybe use it for LLM Memory ...
+async function logSearch( query, queryVector ) {
+
+    let auditDoc = {
+        timestamp: new Date(),
+        username: "test-user",
+        query: query,
+        queryVector: queryVector
+    }
+
+    try {
+        let result = await auditCollection.insertOne(auditDoc);
+    } catch (err) {
+        console.error(`Error logging search history: ${err}`);
+    } 
+
+}
+
+
 app.post('/runVectorQuery', async (request, response) => {
 
     // Runs a vector search.
@@ -106,6 +126,8 @@ app.post('/runVectorQuery', async (request, response) => {
             const embedding = await getEmbedding(queryText);
             console.log(embedding);
 
+            await logSearch(queryText, embedding);
+
             let pageSize = request.body.pageSize
             let numberToSkip = request.body.pageNumber * pageSize
             // Return 1 more than the allowed page size, 
@@ -118,7 +140,7 @@ app.post('/runVectorQuery', async (request, response) => {
                     "queryVector": embedding,
                     "path": "plot_embedding",
                     "numCandidates": 100,
-                    "limit": 50,
+                    "limit": 15,
                     "index": "vector_index",
                 }
             }
