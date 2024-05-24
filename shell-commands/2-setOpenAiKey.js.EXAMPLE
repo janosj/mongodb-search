@@ -1,0 +1,5 @@
+// This key is used to call the OpenAI embedding service,
+// to vectorize a query string.
+
+let OPENAI_KEY="xx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
