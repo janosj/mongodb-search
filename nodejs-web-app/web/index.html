@@ -27,8 +27,9 @@
     }
     /* Search highlights */
     .hl {
-      background-color: white; 
+      background-color: white ; 
       color: green ;
+      font-weight: bold ;
     }
   </style>
   
@@ -271,8 +272,7 @@
                 
                 if ( displayText == "" && searchHit.hasOwnProperty('fullplot') ) { displayText = searchHit.fullplot };
 
-                //displayResult(searchHit.title, searchHit.fullplot);
-                displayResult(searchHit.title, displayText);
+                displayResult(searchHit.title, displayText, searchHit.poster, searchHit.year);
                 console.log(searchHit.title, displayText);
 
               } else {
@@ -323,12 +323,23 @@
     }
 
     // Displays a query result
-    function displayResult(title, plotSummary) {
+    function displayResult(title, plotSummary, poster, year) {
+
       document.getElementById("searchResultsSection").innerHTML += 
-        "<div class='card'><div class='card-body'>" + 
-          "<h5 class='card-title'>" + title + "</h5>" +
-          "<p class='card-text' style='font-size:14px'>" + plotSummary + "</p>" +
-        "</div></div>"
+      `<div class="card mb-3">
+        <div class="row g-0">
+          <div class="col-sm-1">
+            <img src="${poster}" class="img-fluid rounded-start" alt="No Image" style="height: 150px;"">
+          </div>
+          <div class="col">
+            <div class="card-body">
+              <h5 class="card-title">${title}</h5>
+              <p class="card-text">${plotSummary}</p>
+              <p class="card-text"><small class="text-muted">Release Year: ${year}</small></p>
+            </div>
+          </div>
+        </div>
+      </div>`
 
     }
 

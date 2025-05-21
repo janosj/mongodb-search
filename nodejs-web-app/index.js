@@ -283,6 +283,18 @@ app.post('/runQuery', async (request, response) => {
             "$limit": pageLimit
         }
 
+        // A $project stage (not used) would look something like this (test for accuracy)
+        let stageProject = 
+        {
+            "$project": {
+                "title": 1,
+                "fullplot": 1,
+                "poster": 1,
+                "highlights": { "$meta": "searchHighlights" },  // <-- Include highlights if needed
+                "score": { "$meta": "searchScore" }             // <-- Optional: include the score
+            }
+        }
+
         let aggPipeline = [ stageSearch, stageIncludeHighlights, stageSkip, stageLimit ]
 
         /* For testing and debugging:
@@ -293,6 +305,7 @@ app.post('/runQuery', async (request, response) => {
         console.log( "Running pipeline: ", JSON.stringify(aggPipeline) )
 
         let result = await movieCollection.aggregate( aggPipeline ).toArray()
+        
         //console.log(result);
         response.send(result);
         console.log("Search results delivered to web client.\n")
