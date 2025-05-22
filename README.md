@@ -4,7 +4,7 @@ A simple, clean example of using Atlas Search and Vector Search within a node.js
 
 # Prerequisites
 
-## Launch an Atlas Cluster with the Sample Datasetss
+## Launch an Atlas Cluster with the Sample Datasets
 
 Atlas Search (and Vector Search) requires MongoDB Atlas. Launch a cluster and load the sample datasets, which include the `sample_mflix` database and, within it, the `embedded_movies` collection. That collection has a `fullplot` field, which will be used to support standard text searches, and a `plot_embedding` field that supports vector search.
 
